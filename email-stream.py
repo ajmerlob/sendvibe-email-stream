@@ -17,6 +17,8 @@ dynamodb = boto3.resource('dynamodb')
 tokens = dynamodb.Table('tokens')
 last_interaction = dynamodb.Table('last_interaction')
 
+gmail_dict = {}
+
 def get_creds(email_address):
     response = tokens.get_item(Key={'key':email_address})['Item']
     del response['key']
@@ -127,13 +129,32 @@ def lambda_handler(event, context):
             continue
 
         ## Trade the email address for gmail credentials
-        creds = get_creds(email_address)
-        gmail = googleapiclient.discovery.build(API_SERVICE_NAME, API_VERSION, credentials=creds)
+        if email_address in gmail_dict:
+            gmail = gmail_dict[email_address]
+        else:
+            creds = get_creds(email_address)
+            gmail = googleapiclient.discovery.build(API_SERVICE_NAME, API_VERSION, credentials=creds)
+            gmail_dict[email_address] = gmail
 
         ## Trade the gmail credentials for the history list
-        history_response = gmail.users().history().list(userId='me',startHistoryId=historyId).execute()
+        try:
+            history_response = gmail.users().history().list(userId='me',startHistoryId=historyId).execute()
+        except Exception, e:
+            logging.error("History response failed to take")
+            logging.error(e)
+            continue
+        found_one = False
+        if 'history' not in history_response:
+            logging.error("history not in history_response")
+            logging.error(history_response)
+            continue
+
         for change in history_response['history']:
+            if found_one:
+                continue
             for message in change['messages']:
+                if found_one:
+                    continue
                 email_id = message['id']
                 try:
                     ## Extract the email metadata
@@ -142,7 +163,8 @@ def lambda_handler(event, context):
                         continue
                     else:
                         interact_with_user(email_address)
-                        return "Now we are interacting"
+                        found_one = True
+                        continue
                 except Exception, e:
                     logging.error("Issue with email responses")
                     logging.error(e)

@@ -16,6 +16,9 @@ API_VERSION = 'v1'
 dynamodb = boto3.resource('dynamodb')
 tokens = dynamodb.Table('tokens')
 last_interaction = dynamodb.Table('last_interaction')
+typeform = dynamodb.Table('typeform')
+starters = {}
+MIN_INTERACT_TIME = 3600
 
 gmail_dict = {}
 
@@ -31,7 +34,7 @@ def already_interacting(email_address):
         item = last_interaction.get_item(Key={"key":email_address})
         if 'Item' in item:
             last_time = item['Item']['time']
-            return time.time() - float(last_time) < 3600
+            return time.time() - float(last_time) < MIN_INTERACT_TIME
         else:
             logging.error("{} did not have a last interaction time.  See: {}".format(email_address,item))
             return False
@@ -109,6 +112,21 @@ SendVibe
     s.sendmail(sender_address,email_address,message)
     return None
 
+def on_target_list(email_address,others):
+    logging.error(others)
+    if email_address in starters:
+        logging.error('cached starters')
+        logging.error(starters[email_address])
+        logging.error(len(others.intersection(starters[email_address])))
+        return len(others.intersection(starters[email_address])) > 0
+    try:
+        starters[email_address] = typeform.get_item(Key={"email_address":email_address})['Item']['starters']
+        logging.error(starters[email_address])
+        return len(others.intersection(starters[email_address])) > 0
+    except:
+        return True
+    
+
 def lambda_handler(event, context):
     logging.error(event)
     for record in event['Records']:
@@ -159,14 +177,26 @@ def lambda_handler(event, context):
                 try:
                     ## Extract the email metadata
                     email_response = gmail.users().messages().get(userId='me',id=email_id,format='metadata').execute()
+                    if 'error' in email_response:
+                        logging.error("Error in email id {} response {}".format(email_id,email_response))
+                        continue
                     if 'DRAFT' not in email_response['labelIds']:
                         continue
                     else:
-                        interact_with_user(email_address)
-                        found_one = True
-                        continue
+                        ## Flatten the list of recipients and add to set called others
+                        others = set([])
+                        headers = [header['value'] for header in email_response['payload']['headers'] if header['name'] in ['To','Cc','Bcc']]
+                        for header in headers:
+                            for recipient in [x.strip() for x in header.split(",")]: others.add(recipient)
+                        ## Check if our target list has any of those recipients
+                        if on_target_list(email_address,others):
+                            interact_with_user(email_address)
+                            found_one = True
+                            continue
+                        else:
+                            continue
                 except Exception, e:
-                    logging.error("Issue with email responses")
+                    logging.error("Issue with email response {}".format(email_id))
                     logging.error(e)
                     continue
 

@@ -56,7 +56,7 @@ def interact_with_user(email_address):
     message = "From: %s\r\nSubject: %s\r\nTo: %s\r\n\r\n" % (sender_address,"Pre-write with SendVibe!",email_address) + \
     "Hey there!  Thanks again for choosing SendVibe!!\n\n"+ \
     "I saw that you started a draft, and so I wanted to introduce you to a pre-writing exercise that I thought might be helpful:\n\n"+ \
-    """
+    """-----------------------------------------
 It's called "Scripting" and it comes from our friends over at MindTools.
 
 It can often be hard to know how to put your feelings across clearly and confidently to someone when you need to assert yourself. The scripting technique can help here. It allows you to prepare what you want to say in advance, using a four-pronged approach that describes:
@@ -76,7 +76,7 @@ It can often be hard to know how to put your feelings across clearly and confide
 4. The consequences. Describe the positive impact that your request will have for the other person or the company if your needs are met successfully.
 
 "If you do this we will be in a good position to hit our targets and may get a better end-of-year bonus."
-
+-----------------------------------------
 
 
 Now it's YOUR turn!  Hit reply to this email and scroll down so you can type your answers in the spaces below:
@@ -107,6 +107,10 @@ If you liked this pre-writing tool, you should know it was shamelessly plagiariz
 
 Best,
 SendVibe
+
+
+
+If you would like to stop using SendVibe, you can revoke SendVibe's access to your inbox at any time by visiting <https://myaccount.google.com/permissions> and clicking "Remove Access" in the SendVibe Alpha section.
     """
 
     s = smtplib.SMTP(host='smtp.gmail.com', port=587)

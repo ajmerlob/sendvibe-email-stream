@@ -23,7 +23,10 @@ MIN_INTERACT_TIME = 3600
 #gmail_dict = {}
 
 def get_creds(email_address):
-    response = tokens.get_item(Key={'key':email_address})['Item']
+    data = tokens.get_item(Key={'key':email_address})
+    if 'Item' not in data:
+        return None
+    response = data['Item']
     del response['key']
     del response['timestamp']
     creds = google.oauth2.credentials.Credentials(**response)
@@ -147,12 +150,11 @@ def lambda_handler(event, context):
             continue
 
         ## Trade the email address for gmail credentials
-#        if email_address in gmail_dict:
-#            gmail = gmail_dict[email_address]
-#        else:
         creds = get_creds(email_address)
+        if creds is None:
+            logging.error("Credentials possibly revoked")
+            continue
         gmail = googleapiclient.discovery.build(API_SERVICE_NAME, API_VERSION, credentials=creds)
-#            gmail_dict[email_address] = gmail
 
         ## Trade the gmail credentials for the history list
         try:

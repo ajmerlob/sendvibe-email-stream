@@ -20,7 +20,7 @@ typeform = dynamodb.Table('typeform')
 starters = {}
 MIN_INTERACT_TIME = 3600
 
-gmail_dict = {}
+#gmail_dict = {}
 
 def get_creds(email_address):
     response = tokens.get_item(Key={'key':email_address})['Item']
@@ -31,7 +31,7 @@ def get_creds(email_address):
 
 def already_interacting(email_address):
     try:
-        item = last_interaction.get_item(Key={"key":email_address})
+        item = last_interaction.get_item(Key={"email_address":email_address})
         if 'Item' in item:
             last_time = item['Item']['time']
             return time.time() - float(last_time) < MIN_INTERACT_TIME
@@ -44,7 +44,7 @@ def already_interacting(email_address):
         return False
 
 def interact_with_user(email_address):
-    last_interaction.put_item(Item={'key':email_address,"time":str(time.time())})
+    last_interaction.put_item(Item={'email_address':email_address,"time":str(time.time())})
     logging.error('we got one!!')
     import email
     import smtplib
@@ -147,12 +147,12 @@ def lambda_handler(event, context):
             continue
 
         ## Trade the email address for gmail credentials
-        if email_address in gmail_dict:
-            gmail = gmail_dict[email_address]
-        else:
-            creds = get_creds(email_address)
-            gmail = googleapiclient.discovery.build(API_SERVICE_NAME, API_VERSION, credentials=creds)
-            gmail_dict[email_address] = gmail
+#        if email_address in gmail_dict:
+#            gmail = gmail_dict[email_address]
+#        else:
+        creds = get_creds(email_address)
+        gmail = googleapiclient.discovery.build(API_SERVICE_NAME, API_VERSION, credentials=creds)
+#            gmail_dict[email_address] = gmail
 
         ## Trade the gmail credentials for the history list
         try:

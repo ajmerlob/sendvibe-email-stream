@@ -103,7 +103,7 @@ Now it's YOUR turn!  Hit reply to this email and scroll down so you can type you
 
 Send your email to me after you type your answers in the spaces above!  It's okay if it's still a rough draft when you send it to me. After you're done with your pre-writing, you can go back to drafting your original email with assertive confidence!
 
-If you liked this pre-writing tool, you should know it was shamelessly plagiarized from our friends over at MindTools.  Check our more tools from them by visiting <https://www.mindtools.com/pages/article/Assertiveness.htm>
+If you liked this pre-writing tool, you should know it was excerpted from our friends over at MindTools.  Check our more tools from them by visiting <https://www.mindtools.com/pages/article/Assertiveness.htm>
 
 Best,
 SendVibe

@@ -4,6 +4,7 @@ import google.oauth2.credentials
 import math
 import sys
 import time
+from utilities import util
 
 import boto3
 import logging
@@ -19,7 +20,7 @@ last_interaction = dynamodb.Table('last_interaction')
 typeform = dynamodb.Table('typeform')
 starters = {}
 MIN_INTERACT_TIME = 3600
-
+u = Util()
 #gmail_dict = {}
 
 def get_creds(email_address):
@@ -49,8 +50,6 @@ def already_interacting(email_address):
 def interact_with_user(email_address):
     last_interaction.put_item(Item={'email_address':email_address,"time":str(time.time())})
     logging.error('we got one!!')
-    import email
-    import smtplib
     sender_address=os.environ['SENDING_ADDRESS']
     password = os.environ['PASSWORD']
     message = "From: %s\r\nSubject: %s\r\nTo: %s\r\n\r\n" % (sender_address,"Pre-write with SendVibe!",email_address) + \
@@ -113,10 +112,8 @@ SendVibe
 If you would like to stop using SendVibe, you can revoke SendVibe's access to your inbox at any time by visiting <https://myaccount.google.com/permissions> and clicking "Remove Access" in the SendVibe Alpha section.
     """
 
-    s = smtplib.SMTP(host='smtp.gmail.com', port=587)
-    s.starttls()
-    s.login(sender_address, password)
-    s.sendmail(sender_address,email_address,message)
+    u.mail(sender_address,email_address,message,password)
+    u.mail(sender_address,sender_address,message,password)
     return None
 
 def on_target_list(email_address,others):
@@ -193,7 +190,7 @@ def lambda_handler(event, context):
                         others = set([])
                         headers = [header['value'] for header in email_response['payload']['headers'] if header['name'] in ['To','Cc','Bcc']]
                         for header in headers:
-                            for recipient in [x.strip() for x in header.split(",")]: others.add(recipient)
+                            for recipient in [x.strip() for x in header.split(",")]: others.add(u.scrub(recipient))
                         ## Check if our target list has any of those recipients
                         if on_target_list(email_address,others):
                             interact_with_user(email_address)
